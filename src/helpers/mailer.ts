@@ -8,13 +8,17 @@ export const sendMailer = async ({ email, emailType, userId }: any) => {
     // TODO: to some configuration
     if (emailType === "VERIFY") {
       await User.findByIdAndUpdate(userId, {
-        verifiedToken: hashToken,
-        verifiedTokenExpire: Date.now() + 360000,
+        $set: {
+          verifiedToken: hashToken,
+          verifiedTokenExpire: Date.now() + 360000,
+        },
       });
     } else if (emailType === "RESET") {
       await User.findByIdAndUpdate(userId, {
-        forgetPasswordToken: hashToken,
-        forgetPasswordTokenExpire: Date.now() + 360000,
+        $set: {
+          forgetPasswordToken: hashToken,
+          forgetPasswordTokenExpire: Date.now() + 360000,
+        },
       });
     }
     const transporter = nodemailer.createTransport({
@@ -32,7 +36,15 @@ export const sendMailer = async ({ email, emailType, userId }: any) => {
       to: email, // list of receivers
       subject:
         emailType === "VERIFY" ? "verify the email" : "reset the password", // Subject line
-      html: "<b>Hello world?</b>", // html body
+      html: `<p>Click <a href="${
+        process.env.DOMAIN
+      }/verifyemail?token=${hashToken}">here</a> to ${
+        emailType === "VERIFY" ? "verify your email" : "reset your password"
+      }
+            or copy and paste the link below in your browser. <br> ${
+              process.env.DOMAIN
+            }/verifyemail?token=${hashToken}
+            </p>`,
     };
 
     const mailResponse = await transporter.sendMail(mailOption);
